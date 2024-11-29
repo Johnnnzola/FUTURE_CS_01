@@ -1,0 +1,301 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2FA Authentication software</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f3f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        label {
+            text-align: left;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+            background-color: #fafafa;
+        }
+
+        input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #error {
+            color: red;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .form-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-container button {
+            margin-top: 10px;
+        }
+
+        .timer {
+            font-size: 14px;
+            color: #555;
+            margin-top: 15px;
+        }
+
+        /* Footer styles */
+        footer {
+            width: 100%;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        footer a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+
+            input {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            button {
+                padding: 10px;
+                font-size: 14px;
+            }
+        }
+
+        /* Custom message styles */
+        #successMessage {
+            display: none;
+            font-size: 16px;
+            color: green;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Login with 2FA</h2>
+
+        <!-- Login Form -->
+        <div id="loginForm" class="form-container">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter your username" required>
+
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="Enter your email" required>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" required>
+
+            <button onclick="sendOTP()">Send OTP</button>
+        </div>
+
+        <!-- 2FA Form -->
+        <div id="twoFactorForm" class="form-container" style="display: none;">
+            <label for="otp">Enter OTP</label>
+            <input type="text" id="otp" placeholder="Enter OTP code" maxlength="6" required>
+
+            <button onclick="verifyOTP()">Verify OTP</button>
+            <p id="timer" class="timer"></p>
+        </div>
+
+        <p id="error"></p>
+
+        <!-- Success Message -->
+        <p id="successMessage">
+            For more cybersecurity solutions and trends, find John Nzola C.E.H at 
+            <a href="www.linkedin.com/in/john-nzola-c-e-h-aa1684215" target="_blank">LinkedIn</a>, 
+            <a href="https://github.com/Johnnnzola" target="_blank">GitHub</a>, and 
+            <a href="https://www.google.com/search?q=John+Nzola+C.E.H" target="_blank">Google</a>.
+        </p>
+    </div>
+
+    <footer>
+        <p>
+            <a href="https://github.com/Johnnnzola/FUTURE_CS_01/blob/main/LICENSE">Privacy Policy</a> | 
+            <a href="https://github.com/Johnnnzola" target="_blank">GitHub</a> | 
+            <a href="www.linkedin.com/in/john-nzola-c-e-h-aa1684215" target="_blank">LinkedIn</a> | 
+            <a href="tel:+254727861671">Phone: +254 727 861 671</a> | 
+            <a href="mailto:johnnzola270@gmail.com">Email: johnnzola270@gmail.com</a>
+        </p>
+        <p>&copy; Future Interns, November 2024</p>
+    </footer>
+
+    <script>
+        let generatedOTP = '';
+        let otpExpiry = null;
+        let otpTimerInterval = null;
+
+        // Function to generate random 6-digit OTP
+        function generateOTP() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        // Function to validate password
+        function isValidPassword(password) {
+            const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            return passwordPattern.test(password);
+        }
+
+        // Function to simulate sending OTP (client-side only)
+        function sendOTP() {
+            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorElement = document.getElementById('error');
+
+            // Clear previous error
+            errorElement.textContent = '';
+
+            // Validate input fields
+            if (!email || !username || !password) {
+                errorElement.textContent = 'Please fill in all fields.';
+                return;
+            }
+
+            // Validate password format
+            if (!isValidPassword(password)) {
+                errorElement.textContent = 'Password must be at least 8 characters long, include one uppercase letter, one lowercase letter, one number, and one special character.';
+                return;
+            }
+
+            // Generate OTP and set expiry (5 minutes from now)
+            generatedOTP = generateOTP();
+            otpExpiry = Date.now() + 5 * 60 * 1000; // OTP expires in 5 minutes
+
+            // Log OTP to browser's console (for demo purposes only)
+            console.log(`OTP for ${username}: ${generatedOTP}`);
+
+            // Show OTP timer
+            startTimer();
+
+            // Inform user to check the console for OTP
+            alert(`OTP has been generated. Press F12 and go to the "Console" tab to view it.`);
+
+            // Switch to 2FA form
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('twoFactorForm').style.display = 'block';
+        }
+
+        // Function to start countdown timer for OTP expiry
+        function startTimer() {
+            const timerElement = document.getElementById('timer');
+
+            otpTimerInterval = setInterval(function() {
+                const remainingTime = otpExpiry - Date.now();
+                if (remainingTime <= 0) {
+                    clearInterval(otpTimerInterval);
+                    timerElement.textContent = 'OTP expired. Please request a new one.';
+                    document.getElementById('error').textContent = 'OTP has expired. Please request a new one.';
+                } else {
+                    const minutes = Math.floor(remainingTime / 60000);
+                    const seconds = Math.floor((remainingTime % 60000) / 1000);
+                    timerElement.textContent = `Time remaining: ${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+                }
+            }, 1000);
+        }
+
+        // Function to verify OTP entered by the user
+        function verifyOTP() {
+            const otp = document.getElementById('otp').value;
+            const errorElement = document.getElementById('error');
+
+            // Clear previous error
+            errorElement.textContent = '';
+
+            // Check if OTP has expired
+            if (Date.now() > otpExpiry) {
+                errorElement.textContent = 'OTP has expired. Please request a new one.';
+                return;
+            }
+
+            // Verify OTP
+            if (otp === generatedOTP) {
+                // Show success message with links
+                document.getElementById('successMessage').style.display = 'block';
+
+                // Hide OTP form after successful verification
+                document.getElementById('twoFactorForm').style.display = 'none';
+            } else {
+                errorElement.textContent = 'Invalid OTP. Please try again.';
+            }
+        }
+    </script>
+</body>
+</html>
+
